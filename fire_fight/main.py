@@ -1,8 +1,19 @@
+import random
 import sys
+
 import pygame
 import pygame.gfxdraw
 from pygame import Color
-from fire_fight.hexgon import Hex, Layout, Point, layout_pointy, layout_flat, pixel_to_hex
+
+from fire_fight.hexgon import (
+    Hex,
+    Layout,
+    Point,
+    layout_flat,
+    layout_pointy,
+    pixel_to_hex,
+)
+from fire_fight.tile import TILE_COLOR_MAP, HexTile, TileType
 
 # 初始化 pygame
 pygame.init()
@@ -12,33 +23,42 @@ WIDTH, HEIGHT = 1200, 900
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Hex Grid Example")
 
+font = pygame.font.SysFont(None, 24)
+
 # 定义布局 (根据你的布局选择，下面以pointy-top为例)
 # 假设每个六边形的边长为 30 像素
-hex_size = Point(45, 45)
-origin = Point(WIDTH//2, HEIGHT//2)  # 可以将原点放在屏幕中心
+hex_size = Point(30, 30)
+origin = Point(WIDTH // 2, HEIGHT // 2)  # 可以将原点放在屏幕中心
 layout = Layout(layout_pointy, hex_size, origin)
 
-# 定义要绘制的范围（q,r坐标范围）
-# 假设绘制一个中心在 (0,0,-0) 附近的区域
-radius = 11  # 绘制半径为 5 的六边形（即从中心往各方向5步）
+# Define hex grid dimensions (rectangle shape)
+map_width = 40  # Number of hexes horizontally
+map_height = 25  # Number of hexes vertically
 hexes_to_draw = []
-for q in range(-radius, radius+1):
-    for r in range(-radius, radius+1):
+all_hexes = []
+for r in range(-map_height // 2, map_height // 2 + 1):
+    r_offset = r // 2  # Offset for rectangular shape
+    for q in range(-map_width // 2 - r_offset, map_width // 2 - r_offset + 1):
         s = -q - r
-        # 只绘制在 radius 范围内的六边形（使用 hex distance 确定）
-        hex_coord = Hex(q, r, s)
-        if hex_coord.length() <= radius:
-            hexes_to_draw.append(hex_coord)
+        # hex_coord = Hex(q, r, s)
+        tile_type = random.choice(list(TileType))
+        hex_tile = HexTile(q, r, s, tile_type)
+        hexes_to_draw.append(hex_tile)
+        all_hexes.append(hex_tile.hex)
+
 
 # 定义一个函数来绘制一个 hex 的轮廓
-def draw_hex_outline(surface, hex_obj: Hex, layout: Layout, color=Color("black"), width=1):
+def draw_hex_outline(
+    surface, hex_obj: Hex, layout: Layout, color=Color("black"), width=1
+):
     corners = hex_obj.corners(layout)
     # corners 是 [Point(x1, y1), Point(x2, y2), ..., Point(x6, y6)]
     # 将其转换为 pygame 可绘制的点列表
     points = [(p.x, p.y) for p in corners]
     # 使用 draw.polygon 绘制一个多边形的线框
     pygame.draw.polygon(surface, color, points, width)
-    pygame.gfxdraw.aapolygon(surface, points, color)    # 抗锯齿轮廓
+    pygame.gfxdraw.aapolygon(surface, points, color)  # 抗锯齿轮廓
+
 
 # 定义一个函数来填充一个 hex
 def fill_hex(surface, hex_obj: Hex, layout: Layout, color=Color("white")):
@@ -47,16 +67,34 @@ def fill_hex(surface, hex_obj: Hex, layout: Layout, color=Color("white")):
     pygame.draw.polygon(surface, color, points, 0)
     # pygame.gfxdraw.filled_polygon(surface, points, color) # 填充（可选）
 
+
+# Variables for panning
+dragging = False
+last_mouse_pos = None
+
 # 游戏主循环
 running = True
 clock = pygame.time.Clock()
 
 while running:
-    clock.tick(30)  # 控制帧率为30FPS
+    clock.tick(120)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Left mouse button
+                dragging = True
+                last_mouse_pos = pygame.mouse.get_pos()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:  # Left mouse button
+                dragging = False
+        elif event.type == pygame.MOUSEMOTION:
+            if dragging:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                dx, dy = mouse_x - last_mouse_pos[0], mouse_y - last_mouse_pos[1]
+                layout.origin = Point(layout.origin.x + dx, layout.origin.y + dy)
+                last_mouse_pos = (mouse_x, mouse_y)
 
     # 填充背景
     screen.fill((255, 255, 255))
@@ -65,13 +103,27 @@ while running:
     mx, my = pygame.mouse.get_pos()
     hover_hex = pixel_to_hex(layout, Point(mx, my))
 
-    for h in hexes_to_draw:
+    for idx, h in enumerate(hexes_to_draw):
         # 填充颜色
-        fill_hex(screen, h, layout, Color(220,220,220))
-
-        # 如果该 hex 是鼠标悬浮的 hex，则边缘加粗
-        draw_hex_outline(screen, h, layout, Color("black"), width=1)
-    if hover_hex in hexes_to_draw:
+        fill_hex(screen, h.hex, layout, color=TILE_COLOR_MAP[h.tile_type])
+        # 绘制其序号
+        # 计算 Hex 的中心点
+        center = h.hex.to_pixel(layout)
+        # 创建要绘制的文本图像
+        row = str(idx // (map_width + 1)).zfill(2)
+        col = str(idx % (map_width + 1)).zfill(2)
+        text_surface = font.render(f"{row}{col}", True, Color("black"))
+        # 获取文本图像的尺寸
+        text_rect = text_surface.get_rect(center=(center.x, center.y))
+        # 在屏幕上绘制文本
+        screen.blit(text_surface, text_rect)
+        draw_hex_outline(screen, h.hex, layout, Color("black"), width=1)
+    # draw this outline in the end, otherwise the line will be obscured by other draw function
+    if hover_hex in all_hexes:
+        for i in range(6):
+            hex = hover_hex.get_neighbor(i)
+            if hex in all_hexes:
+                draw_hex_outline(screen, hex, layout, Color("blue"), width=4)
         draw_hex_outline(screen, hover_hex, layout, Color("black"), width=4)
 
     # 刷新画面

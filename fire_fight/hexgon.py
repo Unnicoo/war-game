@@ -68,10 +68,10 @@ class Hex:
         return obj
 
     def __add__(self, other: Hex) -> Hex:
-        return Hex(self.q + other.q, self.r + other.r, self.s + other.r)
+        return Hex(self.q + other.q, self.r + other.r, self.s + other.s)
 
     def __sub__(self, other: Hex) -> Hex:
-        return Hex(self.q - other.q, self.r - other.r, self.s - other.r)
+        return Hex(self.q - other.q, self.r - other.r, self.s - other.s)
 
     def __mul__(self, factor: int | float) -> Hex:
         assert isinstance(factor, int), "multiplier must be number"
@@ -113,7 +113,8 @@ class Orientation:
     start_angle: float
 
 
-@dataclass(frozen=True)
+# @dataclass(frozen=True)
+@dataclass
 class Layout:
     orientation: Orientation
     size: Point

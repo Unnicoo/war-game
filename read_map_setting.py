@@ -49,7 +49,7 @@ pygame.init()
 # 设置窗口
 WIDTH, HEIGHT = 1200, 900
 # 创建窗口
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 # 设置标题
 pygame.display.set_caption("Hex Grid Example")
 # 设置字体
@@ -92,7 +92,7 @@ all_hexes = []
 count = 0
 for r in range(-map_height // 2, map_height // 2):
     r_offset = (r + 1) // 2  # Offset for rectangular shape
-    for q in range(-map_width // 2 - r_offset, map_width // 2 - r_offset + 1):
+    for q in range(-map_width // 2 - r_offset, map_width // 2 - r_offset + 1):      # noqa
         s = -q - r
         # hex_coord = Hex(q, r, s)
         row = count // (map_width + 1)
@@ -107,6 +107,7 @@ for r in range(-map_height // 2, map_height // 2):
 
 # Variables for panning
 dragging = False
+scale_factor = 1.0
 last_mouse_pos = None
 
 # 游戏主循环

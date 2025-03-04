@@ -6,18 +6,18 @@ from pygame import Color
 
 class TileType(Enum):
     # cell itself
-    OPEN_GROUND = auto()
-    FOREST = auto()
-    TOWN = auto()
-    RIVER = auto()
+    OPEN_GROUND = 0
+    FOREST = 1
+    TOWN = 2
+    RIVER = 3
     # maybe edge
-    ROAD = auto()
-    PATH = auto()
-    REVERSE_SLOPE = auto()
-    CONTOUR_LINE = auto()
-    BRIDGE = auto()
-    SMOKE_SCREEN = auto()
-    PERSONNEL_SHELTER = auto()
+    ROAD = 4
+    PATH = 5
+    REVERSE_SLOPE = 6
+    CONTOUR_LINE = 7
+    BRIDGE = 8
+    SMOKE_SCREEN = 9
+    PERSONNEL_SHELTER = 10
 
 
 # Mapping Enum to colors

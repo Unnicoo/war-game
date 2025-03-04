@@ -18,11 +18,13 @@ from fire_fight.tile import TILE_COLOR_MAP, HexTile, TileType
 # 初始化 pygame
 pygame.init()
 
-# 设置窗口大小与标题
+# 设置窗口
 WIDTH, HEIGHT = 1200, 900
+# 创建窗口
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+# 设置标题
 pygame.display.set_caption("Hex Grid Example")
-
+# 设置字体
 font = pygame.font.SysFont(None, 24)
 
 # 定义布局 (根据你的布局选择，下面以pointy-top为例)
@@ -37,10 +39,11 @@ map_height = 25  # Number of hexes vertically
 hexes_to_draw = []
 all_hexes = []
 for r in range(-map_height // 2, map_height // 2 + 1):
-    r_offset = r // 2  # Offset for rectangular shape
+    r_offset = (r + 1) // 2  # Offset for rectangular shape
     for q in range(-map_width // 2 - r_offset, map_width // 2 - r_offset + 1):
         s = -q - r
         # hex_coord = Hex(q, r, s)
+        # 这里可以读取地图来放入地形
         tile_type = random.choice(list(TileType))
         hex_tile = HexTile(q, r, s, tile_type)
         hexes_to_draw.append(hex_tile)
@@ -74,11 +77,14 @@ last_mouse_pos = None
 
 # 游戏主循环
 running = True
+# 创建一个帮助跟踪时间的对象，用于控制帧率
 clock = pygame.time.Clock()
 
 while running:
+    # 设定最大帧率，限制主循环的执行速度
     clock.tick(120)
 
+    # 从队列中获取事件
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -119,6 +125,7 @@ while running:
         screen.blit(text_surface, text_rect)
         draw_hex_outline(screen, h.hex, layout, Color("black"), width=1)
     # draw this outline in the end, otherwise the line will be obscured by other draw function
+    #
     if hover_hex in all_hexes:
         for i in range(6):
             hex = hover_hex.get_neighbor(i)
